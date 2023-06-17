@@ -24,11 +24,11 @@ chain = []
 
 def compute_rate_message(base_fees):
     # TODO: make this a function of base fee
-    return 30
+    return 50
 
 
 def generate_random_messages(base_fees):
-    rate_opcodes = 5
+    rate_opcodes = 3
     rate_sps = 10
     rate_messages = compute_rate_message(base_fees)
 
@@ -54,14 +54,15 @@ def generate_random_messages(base_fees):
 
 
 def run_simulation(max_mempool_length=1000):
+    max_mempool_length=1000
     for _ in tqdm.tqdm(range(N_STEPS)):
         list_of_messages = generate_random_messages(tfm.get_fees())
         [mempool.add_message(m) for m in list_of_messages]
         
-        if tfm.tfms[0].base_fee<5e-9 or tfm.tfms[1].base_fee<5e-9:
+        if tfm.tfms[0].base_fee<5e-9 and tfm.tfms[1].base_fee<5e-9:
             capacity=ENV_PARAMS['lane_widths']
         else:
-            capacity=list(np.array(ENV_PARAMS['lane_widths'])/2)
+            capacity=list(np.array(ENV_PARAMS['lane_widths'])*0.5*np.random.random())
         
         
         # caps the maximum mempool size to solve a faster knapsack problem
@@ -72,13 +73,14 @@ def run_simulation(max_mempool_length=1000):
             to_remove = [mempool.messages[i] for i in diff]
             mempool.remove(to_remove)
             
-
+    
         try:
             proposed_block = miner.propose_block(mempool,capacity)
         except Exception as e:
             print(f"Error occurred while proposing a block: {str(e)}")
+            proposed_block=[]
             continue
-
+    
         to_remove = [mempool.messages[i] for i in proposed_block]
         block = Block(to_remove)
         
@@ -89,7 +91,7 @@ def run_simulation(max_mempool_length=1000):
 
 def plot_base_fee_evolution():
     for i in range(ENV_PARAMS['N_lanes']):
-        plt.semilogy(tfm.tfms[i].base_fee_list)
+        plt.semilogy(tfm.tfms[i].base_fee_list,label=f'lane {i}')
     plt.xlabel("Epochs")
     plt.ylabel("Base Fee")
     plt.title("Evolution of Base Fee")
@@ -102,7 +104,7 @@ def plot_gas_usage_evolution():
     
     for i in range(ENV_PARAMS['N_lanes']):
         gu=[chain[n].gas_used[i] for n in range(len(chain))]
-        plt.plot(gu,label=f'lane={i}')
+        plt.plot(gu,label=f'lane {i}')
     plt.xlabel("Epochs")
     plt.ylabel("Gas Usage")
     plt.title("Evolution of Gas Usage")
