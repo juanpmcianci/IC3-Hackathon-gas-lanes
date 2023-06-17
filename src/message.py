@@ -10,7 +10,7 @@ env_params = params.env_params()
 N_lanes = env_params['N_lanes']
 
 class Message:
-    def __init__(self, ID: str, gas_fee_cap: float, gas_premium: float, opcode_list: list, params: list = None):
+    def __init__(self, ID: str, gas_fee_cap: list, gas_premium: list, opcode_list: list, params: list = None):
         """
         Represents a message included in the blockchain.
 
@@ -69,5 +69,5 @@ if __name__ == '__main__':
 
     opcode_list = [opcode1, opcode2, opcode3, opcode4]
     MESSAGE_NAME = 'msg1'
-    message1 = Message(MESSAGE_NAME, 100.0, 50.0, opcode_list)
+    message1 = Message(MESSAGE_NAME, [100.0,100], [50.0,50], opcode_list)
     print(f'Message {MESSAGE_NAME} has a gas usage of {message1.gas_used} and a gas limit of {message1.gas_limit}')
