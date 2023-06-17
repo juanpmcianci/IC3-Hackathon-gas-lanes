@@ -91,19 +91,19 @@ def multidimensional_knapsack_approx(values: List[float], weights: List[List[flo
     # Return the indices of the chosen items
     return [i for i in range(num_items) if chosen_items[i] == 1]
 
-
-import time
-t0=time.time()
-values = [60, 100, 100020]
-weights = [[10, 20], [20, 30], [30, 40]]
-capacity = [50, 60]
-
-chosen_items = multidimensional_knapsack(values, weights, capacity)
-print("Chosen items:", chosen_items)
-print(f'computation time {time.time()-t0}')
-
-t0=time.time()
-
-chosen_items = multidimensional_knapsack_approx(values, weights, capacity)
-print("Chosen items:", chosen_items)
-print(f'computation time {time.time()-t0}')
+if __name__=='__main__':
+    import time
+    t0=time.time()
+    values = [60, 100, 100020]
+    weights = [[10, 20], [20, 30], [30, 40]]
+    capacity = [50, 60]
+    
+    chosen_items = multidimensional_knapsack(values, weights, capacity)
+    print("Chosen items:", chosen_items)
+    print(f'computation time {time.time()-t0}')
+    
+    t0=time.time()
+    
+    chosen_items = multidimensional_knapsack_approx(values, weights, capacity)
+    print("Chosen items:", chosen_items)
+    print(f'computation time {time.time()-t0}')
