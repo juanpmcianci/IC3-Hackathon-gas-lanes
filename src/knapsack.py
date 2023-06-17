@@ -72,7 +72,7 @@ def multidimensional_knapsack_approx(values: List[float], weights: List[List[flo
 
     # Calculate value-to-weight ratio for each item for each dimension
     # And take the minimum ratio (considering it as the bottleneck)
-    ratio = [min(values[i] / weights[i][d] for d in range(num_dimensions)) for i in range(num_items)]
+    ratio = [min(values[i] / (weights[i][d]+1) for d in range(num_dimensions)) for i in range(num_items)]
 
     # Sort the items by value-to-weight ratio
     items = sorted(range(num_items), key=lambda i: -ratio[i])

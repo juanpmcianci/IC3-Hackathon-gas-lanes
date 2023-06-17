@@ -7,11 +7,11 @@ Created on Fri Jun 16 12:31:57 2023
 """
 from message import Message
 class Mempool:
-    def __init__(self):
+    def __init__(self,initial_messages:list=[]):
         """
         Represents a mempool that holds a collection of messages.
         """
-        self.messages = []
+        self.messages = initial_messages
 
     def add_message(self, message):
         """
@@ -21,7 +21,12 @@ class Mempool:
             message (Message): The message to be added.
         """
         self.messages.append(message)
-
+        
+    def remove(self,list_of_messages):
+        for m in list_of_messages:
+            self.remove_message(m)
+        
+        
     def remove_message(self, message):
         """
         Remove a message from the mempool.
@@ -47,6 +52,6 @@ class Mempool:
         weights=[]
         
         for m in self.messages:
-            values.append(m.gas_premium())
+            values.append(sum(m.gas_premium))
             weights.append(m.gas_limit)
         return values,weights

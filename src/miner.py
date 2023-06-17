@@ -15,18 +15,24 @@ lane_widths= env_params['lane_widths']
 
 
 class Miner(User):
-    def __init__(self, account_balance: float,
-                 strategy:str='greedy'):
+    def __init__(self, account_balance: float):
         super().__init__()
         self.account_balance = account_balance
-    def propose_block(self,mempool):
-        if self.strategy=='greedy':
-            values,weights=mempool.get_parameters_for_knapsack()
-            list_of_messages=multidimensional_knapsack_approx(values=values,
-                                                              weights=weights,
-                                                              capacity=lane_widths) 
+    def propose_block(self,mempool,capacity):
+        values,weights=mempool.get_parameters_for_knapsack()
+        list_of_messages=multidimensional_knapsack_approx(values=values,
+                                                          weights=weights,
+                                                          capacity=capacity) 
+        
         
         return list_of_messages
+    
+    
+        
+        
+        
+        
+        
             
             
         

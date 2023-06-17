@@ -24,9 +24,9 @@ def classify(name: str = None, opcode_id: int = None):
     if name is not None:
         # TODO: Model only considers 2 lanes at the moment, this needs to change
         if name in ETH_OPCODES:
-            lane = 0
-        else:
             lane = 1
+        else:
+            lane = 0
 
     else:
         raise ValueError("Opcode name must be provided")

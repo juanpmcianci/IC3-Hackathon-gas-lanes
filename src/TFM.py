@@ -60,7 +60,6 @@ class EIP1559MultiDimensionalMechanism:
                 Each tuple contains the Id, base fee, min fee, target, and capacity of a block's TFM.
         """
         self.tfms = [EIP1559TFM(Id, base_fee, min_fee, target, capacity) for Id, base_fee, min_fee, target, capacity in dimensions]
-
     def update_fees(self, gas_used: List[float]) -> List[float]:
         """
         Calculates the fees for each block based on the gas used in each block.
@@ -79,6 +78,7 @@ class EIP1559MultiDimensionalMechanism:
 
 if __name__=='__main__':
     import matplotlib.pyplot as plt
+    import numpy as np
     
     dimensions = [(1, 1.0, 0.5, 50.0, 100.0), 
                   (2, 0.5, 0.2, 30.0, 80.0), 
@@ -97,12 +97,12 @@ if __name__=='__main__':
             base_fee_evolution[i].append(fee)
     
         # Update epoch_gas_used for the next epoch (for demonstration purposes)
-        epoch_gas_used = [gas * 0.9 for gas in epoch_gas_used]
+        epoch_gas_used = [gas * 2*np.random.random() for gas in epoch_gas_used]
     
     # Plot the base fee evolution for each block
     for i, base_fee_history in enumerate(base_fee_evolution):
         block_id = dimensions[i][0]
-        plt.plot(range(num_epochs), base_fee_history, label=f"Block {block_id}")
+        plt.plot(range(num_epochs), base_fee_history, label=f"lane {block_id}")
     
     plt.xlabel("Epochs")
     plt.ylabel("Base Fee")
