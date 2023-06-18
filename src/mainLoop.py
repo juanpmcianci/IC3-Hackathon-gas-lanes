@@ -12,7 +12,7 @@ from block import Block
 # Load environment and lane parameters
 ENV_PARAMS = params.env_params()
 LANE_PARAMS = params.gas_lanes_params()
-N_STEPS = 1000  # Number of steps in the simulation
+N_STEPS = 2880  # Number of steps in the simulation
 
 # Instantiates the code
 tfm = EIP1559MultiDimensionalMechanism(LANE_PARAMS)
