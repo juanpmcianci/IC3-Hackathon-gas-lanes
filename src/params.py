@@ -10,11 +10,20 @@ def env_params():
     env_params={
         'N_lanes':2,
         'N_steps':2880,
-        'lane_widths':[6e9,4e9],
-        'lane_targets':[3e9,2e9],
+        'lane_widths':[7e9,3e9],
+        'lane_targets':[3.5e9,1.5e9],
         'initial_base_fee':[1e-10,1e-10],
         'min_fee':[1e-16,1e-16]
         }
+    # env_params={
+    #     'N_lanes':1,
+    #     'N_steps':2880,
+    #     'lane_widths':[10e9],
+    #     'lane_targets':[5e9],
+    #     'initial_base_fee':[1e-11],
+    #     'min_fee':[1e-16]
+    #     }
+
     return env_params
 
 def gas_lanes_params():
@@ -202,7 +211,7 @@ def eth_opcodes():
     }
     
     for opcode in opcode_gas_limits:
-        opcode_gas_limits[opcode] += 100000000
+        opcode_gas_limits[opcode] += 1e7
 
     return opcode_gas_limits
 

@@ -39,7 +39,10 @@ class Message:
         """
         gas_used = [ 0 for i in range(N_lanes)]
         for opcode in self.opcode_list:
-            lane = opcode.belongs_to_lane
+            if len(gas_used)>1:
+                lane = opcode.belongs_to_lane
+            else:
+                lane=0
             gas_used[lane] += opcode.gas_used
 
         return gas_used
@@ -54,7 +57,7 @@ class Message:
         gas_limit = [ 0 for i in range(N_lanes)]
 
         for l in range(N_lanes):
-            overestimation_factor=(1 + np.random.random())
+            overestimation_factor=(1 + 0.2*np.random.random())
             gas_limit[l]=int(self.gas_used[l]*overestimation_factor)
 
         return gas_limit

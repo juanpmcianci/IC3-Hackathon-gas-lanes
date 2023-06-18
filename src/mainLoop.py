@@ -20,29 +20,31 @@ mempool = Mempool()
 miner = Miner(account_balance=0)
 opcodes_names = list(params.eth_opcodes().keys())
 chain = []
-
-
+ml=[]
+mg=[]
 def compute_rate_message(base_fees):
     # TODO: make this a function of base fee
-    return 50
+    
+    
+    N_messages = np.random.poisson(10)
+
+    return N_messages
 
 
-def generate_random_messages(base_fees):
-    rate_opcodes = 3
-    rate_sps = 10
-    rate_messages = compute_rate_message(base_fees)
+def generate_random_messages(N_messages,base_fees):
+    rate_opcodes = 100
+    rate_sps = 2
 
-    N_messages = np.random.poisson(rate_messages)
     list_of_messages = []
     for _ in range(N_messages):
         oc_list = []
-        K = np.random.poisson(rate_opcodes) + 1
+        K = np.random.poisson(rate_opcodes) 
         S = np.random.poisson(rate_sps)
         sampled_opcodes = np.random.choice(opcodes_names, K)
 
         aux_list = list(sampled_opcodes)
         oc_list = [Opcode(name=a) for a in aux_list]
-        for _ in range(S + 1):
+        for _ in range(S ):
             oc_list.append(Opcode(name='SP', gas_used=1e8 * np.random.random()))
 
         MESSAGE_NAME = 'msg'
@@ -53,17 +55,32 @@ def generate_random_messages(base_fees):
     return list_of_messages
 
 
-def run_simulation(max_mempool_length=1000):
-    max_mempool_length=1000
+def sample_oom():
+    
+    r=np.random.randint(7,10)
+    return np.random.random()*10**-r
+
+
+
+def run_simulation(max_mempool_length=2000):
     for _ in tqdm.tqdm(range(N_STEPS)):
-        list_of_messages = generate_random_messages(tfm.get_fees())
+        
+        
+        N_messages=compute_rate_message(tfm.get_fees())
+        
+        list_of_messages = generate_random_messages(N_messages,tfm.get_fees())
         [mempool.add_message(m) for m in list_of_messages]
-        
-        if tfm.tfms[0].base_fee<5e-9 and tfm.tfms[1].base_fee<5e-9:
-            capacity=ENV_PARAMS['lane_widths']
-        else:
-            capacity=list(np.array(ENV_PARAMS['lane_widths'])*0.5*np.random.random())
-        
+        capacity=ENV_PARAMS['lane_widths']
+
+        if np.random.random()<0.5:
+            
+            bfs=np.array([tfm.tfms[i].base_fee for i in range(ENV_PARAMS['N_lanes'])])
+            
+            if all(bfs<sample_oom()):
+                capacity=ENV_PARAMS['lane_widths']
+            else:
+                capacity=list(np.array(ENV_PARAMS['lane_widths'])*0.5*np.random.random())
+
         
         # caps the maximum mempool size to solve a faster knapsack problem
         if max_mempool_length<len(mempool.messages):
@@ -82,40 +99,92 @@ def run_simulation(max_mempool_length=1000):
             continue
     
         to_remove = [mempool.messages[i] for i in proposed_block]
-        block = Block(to_remove)
+        block = Block(to_remove,N_lanes=ENV_PARAMS['N_lanes'])
         
         mempool.remove(block.messages)
         chain.append(block)
         tfm.update_fees(block.gas_used)
+        ml.append(len(mempool.messages))
+        mg.append(sum([sum(m.gas_used) for m in mempool.messages]))
 
 
 def plot_base_fee_evolution():
     for i in range(ENV_PARAMS['N_lanes']):
-        plt.semilogy(tfm.tfms[i].base_fee_list,label=f'lane {i}')
+        if ENV_PARAMS['N_lanes']>1:
+            if i==0:
+                plt.semilogy(tfm.tfms[i].base_fee_list,label='priority lane')
+
+            else:
+                plt.semilogy(tfm.tfms[i].base_fee_list,label='other lane ')
+
+        else:
+            plt.semilogy(tfm.tfms[i].base_fee_list,label='unique')
+
+        
     plt.xlabel("Epochs")
     plt.ylabel("Base Fee")
     plt.title("Evolution of Base Fee")
     plt.legend()
     plt.grid(True)
-    plt.show()
+    #plt.show()
     
     
 def plot_gas_usage_evolution():
     
     for i in range(ENV_PARAMS['N_lanes']):
         gu=[chain[n].gas_used[i] for n in range(len(chain))]
-        plt.plot(gu,label=f'lane {i}')
+        if ENV_PARAMS['N_lanes']>1:
+            if i==0:
+                plt.plot(gu,label='priority lane')
+            else:
+                plt.plot(gu,label='Other lane')
+        else:
+            plt.plot(gu,label='One dimensional case')
+
+
     plt.xlabel("Epochs")
     plt.ylabel("Gas Usage")
     plt.title("Evolution of Gas Usage")
     plt.legend()
     plt.grid(True)
-    plt.show()
+    #plt.show()
 
+def plot_mempool_size_evolution():
+    
+    plt.plot(ml)
+    plt.xlabel("Epochs")
+    plt.ylabel("number of messages in mempool")
+    plt.title("Evolution of mempool size")
+    plt.legend()
+    plt.grid(True)
+    #plt.show()
 
+def plot_mempool_gas_evolution():
+    
+    plt.plot(mg)
+    plt.xlabel("Epochs")
+    plt.ylabel("Total gas in mempool")
+    plt.title("Evolution of mempool gas demand")
+    plt.legend()
+    plt.grid(True)
+    #plt.show()
 
 if __name__ == '__main__':
+    
+    plt.figure(figsize=(16,16))
+    plt.rcParams.update({'font.size': 22})
+
     run_simulation()
+    plt.subplot(221)
     plot_base_fee_evolution()
+    plt.subplot(222)
+
     plot_gas_usage_evolution()
+    plt.subplot(223)
+
+    plot_mempool_size_evolution()
+    plt.subplot(224)
+
+    plot_mempool_gas_evolution()
+    plt.tight_layout()
 

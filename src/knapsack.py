@@ -36,17 +36,18 @@ def multidimensional_knapsack(values: List[float], weights: List[List[float]], c
         prob += lpSum(weights[i][d] * item_vars[i] for i in range(num_items)) <= capacity[d], f"weight_{d}"
 
     # The problem is solved using PuLP's choice of Solver
-    prob.solve()
+    prob.solve(PULP_CBC_CMD(msg=0))
+
 
     # The status of the solution is printed to the screen
-    print("Status:", LpStatus[prob.status])
+    #print("Status:", LpStatus[prob.status])
 
     # The solution is printed if it is optimal
-    if LpStatus[prob.status] == "Optimal":
-        chosen_items = [i for i, var in item_vars.items() if var.varValue > 0]
-        return chosen_items
-    else:
-        return None
+    #if LpStatus[prob.status] == "Optimal":
+    chosen_items = [i for i, var in item_vars.items() if var.varValue > 0]
+    return chosen_items
+    # else:
+    #     return None
 
 
 def multidimensional_knapsack_approx(values: List[float], weights: List[List[float]], capacity: List[float]) -> List[str]:
@@ -72,7 +73,7 @@ def multidimensional_knapsack_approx(values: List[float], weights: List[List[flo
 
     # Calculate value-to-weight ratio for each item for each dimension
     # And take the minimum ratio (considering it as the bottleneck)
-    ratio = [min(values[i] / (weights[i][d]+1e-16) for d in range(num_dimensions)) for i in range(num_items)]
+    ratio = [min(values[i] / (weights[i][d]+1) for d in range(num_dimensions)) for i in range(num_items)]
 
     # Sort the items by value-to-weight ratio
     items = sorted(range(num_items), key=lambda i: -ratio[i])
@@ -90,6 +91,10 @@ def multidimensional_knapsack_approx(values: List[float], weights: List[List[flo
 
     # Return the indices of the chosen items
     return [i for i in range(num_items) if chosen_items[i] == 1]
+
+
+
+
 
 if __name__=='__main__':
     import time
