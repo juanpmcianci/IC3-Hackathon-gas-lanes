@@ -12,39 +12,41 @@ from block import Block
 # Load environment and lane parameters
 ENV_PARAMS = params.env_params()
 LANE_PARAMS = params.gas_lanes_params()
-N_STEPS = 1000#ENV_PARAMS['N_steps']
+N_STEPS = 1000  # Number of steps in the simulation
 
 # Instantiates the code
 tfm = EIP1559MultiDimensionalMechanism(LANE_PARAMS)
 mempool = Mempool()
 miner = Miner(account_balance=0)
 opcodes_names = list(params.eth_opcodes().keys())
-chain = []
-ml=[]
-mg=[]
-def compute_rate_message(base_fees):
-    # TODO: make this a function of base fee
-    
-    
-    N_messages = np.random.poisson(10)
 
+# Chain and lists to store simulation results
+chain = []
+ml = []
+mg = []
+
+# Function to compute the number of messages based on base_fees
+def compute_rate_message(base_fees):
+    N_messages = np.random.poisson(10)
     return N_messages
 
-
+# Function to generate random messages
 def generate_random_messages(N_messages,base_fees):
+    # Constants for Poisson distributions
     rate_opcodes = 100
     rate_sps = 2
-
+    # Create empty list for storing messages
     list_of_messages = []
+
     for _ in range(N_messages):
         oc_list = []
-        K = np.random.poisson(rate_opcodes) 
+        K = np.random.poisson(rate_opcodes)
         S = np.random.poisson(rate_sps)
         sampled_opcodes = np.random.choice(opcodes_names, K)
 
         aux_list = list(sampled_opcodes)
         oc_list = [Opcode(name=a) for a in aux_list]
-        for _ in range(S ):
+        for _ in range(S):
             oc_list.append(Opcode(name='SP', gas_used=1e8 * np.random.random()))
 
         MESSAGE_NAME = 'msg'
@@ -54,58 +56,50 @@ def generate_random_messages(N_messages,base_fees):
         list_of_messages.append(Message(MESSAGE_NAME, gas_fee_cap, gas_premium, oc_list))
     return list_of_messages
 
-
+# Function to sample OOM (Out of Memory) value
 def sample_oom():
-    
-    r=np.random.randint(7,10)
-    return np.random.random()*10**-r
+    r = np.random.randint(7, 10)
+    return np.random.random() * 10 ** -r
 
-
-
+# Function to run the simulation
 def run_simulation(max_mempool_length=2000):
     for _ in tqdm.tqdm(range(N_STEPS)):
-        
-        
-        N_messages=compute_rate_message(tfm.get_fees())
-        
+        # samples number of messages to be added to the Mempool
+        N_messages = compute_rate_message(tfm.get_fees())
         list_of_messages = generate_random_messages(N_messages,tfm.get_fees())
+
+        # Add messages to the mempool
         [mempool.add_message(m) for m in list_of_messages]
-        capacity=ENV_PARAMS['lane_widths']
+        capacity = ENV_PARAMS['lane_widths']
 
-        if np.random.random()<0.5:
-            
-            bfs=np.array([tfm.tfms[i].base_fee for i in range(ENV_PARAMS['N_lanes'])])
-            
-            if all(bfs<sample_oom()):
-                capacity=ENV_PARAMS['lane_widths']
+        # Half the capacity of the lanes if a certain condition is met
+        if np.random.random() < 0.5:
+            bfs = np.array([tfm.tfms[i].base_fee for i in range(ENV_PARAMS['N_lanes'])])
+            if all(bfs < sample_oom()):
+                capacity = ENV_PARAMS['lane_widths']
             else:
-                capacity=list(np.array(ENV_PARAMS['lane_widths'])*0.5*np.random.random())
+                capacity = list(np.array(ENV_PARAMS['lane_widths']) * 0.5 * np.random.random())
 
-        
-        # caps the maximum mempool size to solve a faster knapsack problem
-        if max_mempool_length<len(mempool.messages):
-            
-            diff=len(mempool.messages)-max_mempool_length
-            diff=list(np.arange(diff))
+        # Caps the maximum mempool size to solve a faster knapsack problem
+        if max_mempool_length < len(mempool.messages):
+            diff = len(mempool.messages) - max_mempool_length
+            diff = list(np.arange(diff))
             to_remove = [mempool.messages[i] for i in diff]
             mempool.remove(to_remove)
-            
-    
+
+        # Try to propose a block and add it to the chain
         try:
-            proposed_block = miner.propose_block(mempool,capacity)
+            proposed_block = miner.propose_block(mempool, capacity)
+            to_remove = [mempool.messages[i] for i in proposed_block]
+            block = Block(to_remove, N_lanes=ENV_PARAMS['N_lanes'])
+            mempool.remove(block.messages)
+            chain.append(block)
+            tfm.update_fees(block.gas_used)
+            ml.append(len(mempool.messages))
+            mg.append(sum([sum(m.gas_used) for m in mempool.messages]))
         except Exception as e:
             print(f"Error occurred while proposing a block: {str(e)}")
-            proposed_block=[]
             continue
-    
-        to_remove = [mempool.messages[i] for i in proposed_block]
-        block = Block(to_remove,N_lanes=ENV_PARAMS['N_lanes'])
-        
-        mempool.remove(block.messages)
-        chain.append(block)
-        tfm.update_fees(block.gas_used)
-        ml.append(len(mempool.messages))
-        mg.append(sum([sum(m.gas_used) for m in mempool.messages]))
 
 
 def plot_base_fee_evolution():
